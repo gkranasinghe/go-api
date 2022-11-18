@@ -1,21 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"os"
+	"github.com/labstack/echo/v4"
+
+	"github.com/gkranasinghe/go-api/handlers"
 )
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Running API v1\n"))
+func main() {
+	e := echo.New()
+	e.POST("/users", handlers.AddUser)
+	// e.GET("/users/:id", handlers.getUser)
+	e.Logger.Fatal(e.Start(":1323"))
 }
 
-func main() {
-	http.HandleFunc("/", rootHandler)
-	err := http.ListenAndServe("localhost:11111", nil)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
+// func ListAllUsers(c echo.Context) error {
+// 	return c.String(http.StatusOK, "Hello, There!")
+// }
+
+// // e.GET("/users/:id", getUser)
+//
+//	func getUser(c echo.Context) error {
+//		// User ID from path `users/:id`
+//		id := c.Param("id")
+//		return c.String(http.StatusOK, "id:"+id)
+//	}
