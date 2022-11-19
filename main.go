@@ -1,26 +1,28 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
-
-	"github.com/gkranasinghe/go-api/handlers"
+	"github.com/gkranasinghe/go-api/user"
 )
 
 func main() {
-	e := echo.New()
-	e.POST("/users", handlers.AddUser)
-	// e.GET("/users/:id", handlers.getUser)
-	e.Logger.Fatal(e.Start(":1323"))
+	config := user.NewConfig()
+
+	db, err := user.ConnectDatabase(config)
+
+	if err != nil {
+		panic(err)
+	}
+
+	userRepository := user.NewUserRepository(db)
+
+	userService := user.NewUserService(config, userRepository)
+
+	handler := NewHandler(userService)
+
+	server, err := NewServer(handler)
+	if err != nil {
+		panic(err)
+	}
+	server.Logger.Fatal(server.Start(":1323"))
+
 }
-
-// func ListAllUsers(c echo.Context) error {
-// 	return c.String(http.StatusOK, "Hello, There!")
-// }
-
-// // e.GET("/users/:id", getUser)
-//
-//	func getUser(c echo.Context) error {
-//		// User ID from path `users/:id`
-//		id := c.Param("id")
-//		return c.String(http.StatusOK, "id:"+id)
-//	}

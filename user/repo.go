@@ -1,4 +1,4 @@
-package wesite
+package user
 
 import (
 	"database/sql"
@@ -14,19 +14,19 @@ var (
 	ErrDeleteFailed = errors.New("delete failed")
 )
 
-type SQLiteRepository struct {
+type UserRepository struct {
 	db *sql.DB
 }
 
-func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
-	return &SQLiteRepository{
+func NewUserRepository(db *sql.DB) *UserRepository {
+	return &UserRepository{
 		db: db,
 	}
 }
 
-func (r *SQLiteRepository) Migrate() error {
+func (r *UserRepository) Migrate() error {
 	query := `
-    CREATE TABLE IF NOT EXISTS websites(
+    CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
         url TEXT NOT NULL,
@@ -38,8 +38,8 @@ func (r *SQLiteRepository) Migrate() error {
 	return err
 }
 
-func (r *SQLiteRepository) Create(website Website) (*Website, error) {
-	res, err := r.db.Exec("INSERT INTO websites(name, url, rank) values(?,?,?)", website.Name, website.URL, website.Rank)
+func (r *UserRepository) Create(user User) (*User, error) {
+	res, err := r.db.Exec("INSERT INTO users(name, url, rank) values(?,?,?)", user.Name, user.URL, user.Rank)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -54,47 +54,47 @@ func (r *SQLiteRepository) Create(website Website) (*Website, error) {
 	if err != nil {
 		return nil, err
 	}
-	website.ID = id
+	user.ID = id
 
-	return &website, nil
+	return &user, nil
 }
 
-func (r *SQLiteRepository) All() ([]Website, error) {
-	rows, err := r.db.Query("SELECT * FROM websites")
+func (r *UserRepository) All() ([]User, error) {
+	rows, err := r.db.Query("SELECT * FROM users")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var all []Website
+	var all []User
 	for rows.Next() {
-		var website Website
-		if err := rows.Scan(&website.ID, &website.Name, &website.URL, &website.Rank); err != nil {
+		var user User
+		if err := rows.Scan(&user.ID, &user.Name, &user.URL, &user.Rank); err != nil {
 			return nil, err
 		}
-		all = append(all, website)
+		all = append(all, user)
 	}
 	return all, nil
 }
 
-func (r *SQLiteRepository) GetByName(name string) (*Website, error) {
-	row := r.db.QueryRow("SELECT * FROM websites WHERE name = ?", name)
+func (r *UserRepository) GetByName(name string) (*User, error) {
+	row := r.db.QueryRow("SELECT * FROM users WHERE name = ?", name)
 
-	var website Website
-	if err := row.Scan(&website.ID, &website.Name, &website.URL, &website.Rank); err != nil {
+	var user User
+	if err := row.Scan(&user.ID, &user.Name, &user.URL, &user.Rank); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotExists
 		}
 		return nil, err
 	}
-	return &website, nil
+	return &user, nil
 }
 
-func (r *SQLiteRepository) Update(id int64, updated Website) (*Website, error) {
+func (r *UserRepository) Update(id int64, updated User) (*User, error) {
 	if id == 0 {
 		return nil, errors.New("invalid updated ID")
 	}
-	res, err := r.db.Exec("UPDATE websites SET name = ?, url = ?, rank = ? WHERE id = ?", updated.Name, updated.URL, updated.Rank, id)
+	res, err := r.db.Exec("UPDATE users SET name = ?, url = ?, rank = ? WHERE id = ?", updated.Name, updated.URL, updated.Rank, id)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +111,8 @@ func (r *SQLiteRepository) Update(id int64, updated Website) (*Website, error) {
 	return &updated, nil
 }
 
-func (r *SQLiteRepository) Delete(id int64) error {
-	res, err := r.db.Exec("DELETE FROM websites WHERE id = ?", id)
+func (r *UserRepository) Delete(id int64) error {
+	res, err := r.db.Exec("DELETE FROM users WHERE id = ?", id)
 	if err != nil {
 		return err
 	}
@@ -127,4 +127,8 @@ func (r *SQLiteRepository) Delete(id int64) error {
 	}
 
 	return err
+}
+
+func ConnectDatabase(config *Config) (*sql.DB, error) {
+	return sql.Open("sqlite3", config.DatabasePath)
 }
