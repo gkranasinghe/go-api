@@ -11,6 +11,7 @@ type Handler struct {
 	Users *user.UserService
 }
 
+// compiler check for Handler implements ServerInterface
 var _ ServerInterface = &Handler{}
 
 func NewHandler(u *user.UserService) *Handler {
@@ -23,8 +24,6 @@ func NewHandler(u *user.UserService) *Handler {
 type ServerInterface interface {
 	FindAll(ctx echo.Context) error
 }
-
-var _ ServerInterface = &Handler{}
 
 func (h *Handler) FindAll(ctx echo.Context) error {
 	_, err := h.Users.FindAll(ctx)
